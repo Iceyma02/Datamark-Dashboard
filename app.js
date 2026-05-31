@@ -267,6 +267,7 @@ function onDataLoaded(filename) {
 
 // ── Filters ──────────────────────────────────────────────────
 function populateFilters() {
+  const clients    = [...new Set(allData.map(d => d.client))].sort();
   const checkers   = [...new Set(allData.map(d => d.inspector))].sort();
   const months     = [...new Set(allData.map(d => d.month))].filter(Boolean).sort();
   const locations  = [...new Set(allData.map(d => d.location))].filter(l => l && l !== 'Unknown').sort();
@@ -277,16 +278,19 @@ function populateFilters() {
     el.innerHTML = el.options[0].outerHTML + arr.map(v => `<option value="${v}">${v}</option>`).join('');
     if (arr.includes(existing)) el.value = existing;
   };
+  setOpts('filter-client',   clients);
   setOpts('filter-checker',  checkers);
   setOpts('filter-month',    months);
   setOpts('filter-location', locations);
 }
 
 function applyFilters() {
+  const fk = $('filter-client').value;
   const fc = $('filter-checker').value;
   const fm = $('filter-month').value;
   const fl = $('filter-location').value;
   filteredData = allData.filter(d =>
+    (fk === 'all' || d.client === fk) &&
     (fc === 'all' || d.inspector === fc) &&
     (fm === 'all' || d.month === fm) &&
     (fl === 'all' || d.location === fl)
