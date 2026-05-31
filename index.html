@@ -137,6 +137,12 @@
           <div class="toolbar" id="toolbar">
             <div class="toolbar-left">
               <div class="filter-group">
+                <label>Client</label>
+                <select id="filter-client" onchange="applyFilters()">
+                  <option value="all">All Clients</option>
+                </select>
+              </div>
+              <div class="filter-group">
                 <label>Checker</label>
                 <select id="filter-checker" onchange="applyFilters()">
                   <option value="all">All Checkers</option>
