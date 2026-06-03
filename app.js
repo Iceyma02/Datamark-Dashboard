@@ -38,12 +38,19 @@ const gridColor  = 'rgba(30,51,71,0.8)';
 const tickColor  = '#4d7a96';
 const font       = "'DM Sans', sans-serif";
 
-function baseChartOpts(horizontal = false) {
+function baseChartOpts(horizontal = false, xLabel = '', yLabel = '') {
+  const axisTitle = (text) => text
+    ? { display: true, text, color: tickColor, font: { family: font, size: 11, weight: '500' }, padding: { top: 4 } }
+    : { display: false };
   const axis = horizontal
-    ? { x: { ticks: { color: tickColor, font: { family: font, size: 11 } }, grid: { color: gridColor } },
-        y: { ticks: { color: tickColor, font: { family: font, size: 11 }, maxRotation: 0 }, grid: { display: false } } }
-    : { x: { ticks: { color: tickColor, font: { family: font, size: 11 }, maxRotation: 35, autoSkip: true, maxTicksLimit: 20 }, grid: { color: gridColor } },
-        y: { ticks: { color: tickColor, font: { family: font, size: 11 } }, grid: { color: gridColor }, beginAtZero: true } };
+    ? {
+        x: { title: axisTitle(xLabel || 'No. of Components'), ticks: { color: tickColor, font: { family: font, size: 11 } }, grid: { color: gridColor }, beginAtZero: true },
+        y: { title: axisTitle(yLabel || 'Inspector / Checker'), ticks: { color: tickColor, font: { family: font, size: 11 }, maxRotation: 0 }, grid: { display: false } }
+      }
+    : {
+        x: { title: axisTitle(xLabel), ticks: { color: tickColor, font: { family: font, size: 11 }, maxRotation: 35, autoSkip: true, maxTicksLimit: 20 }, grid: { color: gridColor } },
+        y: { title: axisTitle(yLabel || 'No. of Components'), ticks: { color: tickColor, font: { family: font, size: 11 } }, grid: { color: gridColor }, beginAtZero: true }
+      };
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -59,14 +66,14 @@ function baseChartOpts(horizontal = false) {
         titleFont: { family: font, weight: '600', size: 13 },
         bodyFont: { family: font, size: 12 },
         padding: 10,
-        callbacks: { label: ctx => '  ' + nf(ctx.parsed[horizontal ? 'x' : 'y']) }
+        callbacks: { label: ctx => '  ' + nf(ctx.parsed[horizontal ? 'x' : 'y']) + ' components' }
       }
     },
     scales: axis
   };
 }
 
-function mkChart(id, type, labels, data, color, horizontal = false) {
+function mkChart(id, type, labels, data, color, horizontal = false, xLabel = '', yLabel = '') {
   if (charts[id]) { charts[id].destroy(); delete charts[id]; }
   const canvas = $(id);
   if (!canvas) return;
@@ -88,7 +95,7 @@ function mkChart(id, type, labels, data, color, horizontal = false) {
         pointBackgroundColor: color,
       }]
     },
-    options: baseChartOpts(horizontal)
+    options: baseChartOpts(horizontal, xLabel, yLabel)
   });
 }
 
@@ -344,14 +351,16 @@ function renderAll() {
 function renderStats() {
   const totalDM   = filteredData.reduce((a, d) => a + d.dm, 0);
   const totalNA   = filteredData.reduce((a, d) => a + d.na, 0);
+  const totalNF   = filteredData.reduce((a, d) => a + d.nf, 0);
   const totalDG   = filteredData.reduce((a, d) => a + d.dg, 0);
   const checkers  = new Set(filteredData.map(d => d.inspector)).size;
   const days      = new Set(filteredData.map(d => d.date)).size;
   $('stats-row').innerHTML = `
-    <div class="stat-card c-accent"><div class="stat-label">Total Records</div><div class="stat-value">${nf(filteredData.length)}</div><div class="stat-sub">Inspection entries</div></div>
-    <div class="stat-card c-green"><div class="stat-label">Total DM</div><div class="stat-value">${nf(totalDM)}</div><div class="stat-sub">Marks inspected</div></div>
-    <div class="stat-card c-amber"><div class="stat-label">Total N/A</div><div class="stat-value">${nf(totalNA)}</div><div class="stat-sub">Not accessible</div></div>
-    <div class="stat-card c-red"><div class="stat-label">Total DG</div><div class="stat-value">${nf(totalDG)}</div><div class="stat-sub">Damaged marks</div></div>
+    <div class="stat-card c-accent"><div class="stat-label">Total Records</div><div class="stat-value">${nf(filteredData.length)}</div><div class="stat-sub">Components inspected</div></div>
+    <div class="stat-card c-green"><div class="stat-label">DM — Marked</div><div class="stat-value">${nf(totalDM)}</div><div class="stat-sub">Datamark found & scanned</div></div>
+    <div class="stat-card c-amber"><div class="stat-label">N/A — Not Accessible</div><div class="stat-value">${nf(totalNA)}</div><div class="stat-sub">Could not be reached</div></div>
+    <div class="stat-card c-blue"><div class="stat-label">N/F — Not Found</div><div class="stat-value">${nf(totalNF)}</div><div class="stat-sub">Component missing</div></div>
+    <div class="stat-card c-red"><div class="stat-label">D/G — Damaged</div><div class="stat-value">${nf(totalDG)}</div><div class="stat-sub">Mark damaged/unreadable</div></div>
     <div class="stat-card c-teal"><div class="stat-label">Checkers</div><div class="stat-value">${checkers}</div><div class="stat-sub">Active inspectors</div></div>
     <div class="stat-card c-blue"><div class="stat-label">Active Days</div><div class="stat-value">${days}</div><div class="stat-sub">Inspection days</div></div>
   `;
@@ -376,11 +385,11 @@ function renderOverview() {
   const checkers = dm.labels;
   const totalVals = checkers.map((_, i) => dm.values[i] + na.values[i] + dg.values[i]);
 
-  mkChart('c-dm-ov',    'bar',  checkers, dm.values,    PALETTE.green);
-  mkChart('c-na-ov',    'bar',  checkers, na.values,    PALETTE.amber);
-  mkChart('c-dg-ov',    'bar',  checkers, dg.values,    PALETTE.red);
-  mkChart('c-total-ov', 'bar',  checkers, totalVals,    PALETTE.blue);
-  mkChart('c-date-ov',  'line', date.labels, date.values, PALETTE.accent);
+  mkChart('c-dm-ov',    'bar',  checkers, dm.values,    PALETTE.green,  false, 'Inspector / Checker', 'DM Marks Found');
+  mkChart('c-na-ov',    'bar',  checkers, na.values,    PALETTE.amber,  false, 'Inspector / Checker', 'N/A Components');
+  mkChart('c-dg-ov',    'bar',  checkers, dg.values,    PALETTE.red,    false, 'Inspector / Checker', 'Damaged Components');
+  mkChart('c-total-ov', 'bar',  checkers, totalVals,    PALETTE.blue,   false, 'Inspector / Checker', 'Total Components');
+  mkChart('c-date-ov',  'line', date.labels, date.values, PALETTE.accent, false, 'Date', 'No. of Inspections');
 }
 
 function renderDMView() {
@@ -390,22 +399,22 @@ function renderDMView() {
   const ht = Math.max(dm.labels.length * 42 + 60, 200);
   const wrap = $('dm-chart-area');
   if (wrap) wrap.style.height = ht + 'px';
-  mkChart('c-dm-detail', 'bar', dm.labels, dm.values, PALETTE.green, true);
-  mkChart('c-dm-trend',  'line', trend.labels, trend.values, PALETTE.green);
+  mkChart('c-dm-detail', 'bar', dm.labels, dm.values, PALETTE.green, true, 'DM Marks Found', 'Inspector / Checker');
+  mkChart('c-dm-trend',  'line', trend.labels, trend.values, PALETTE.green, false, 'Date', 'DM Marks Found');
 }
 
 function renderNAView() {
   const na    = byChecker('na');
   const trend = fieldByDate('na');
-  mkChart('c-na-detail', 'bar', na.labels, na.values, PALETTE.amber, true);
-  mkChart('c-na-trend',  'line', trend.labels, trend.values, PALETTE.amber);
+  mkChart('c-na-detail', 'bar', na.labels, na.values, PALETTE.amber, true, 'N/A Components', 'Inspector / Checker');
+  mkChart('c-na-trend',  'line', trend.labels, trend.values, PALETTE.amber, false, 'Date', 'N/A Components');
 }
 
 function renderDGView() {
   const dg    = byChecker('dg');
   const trend = fieldByDate('dg');
-  mkChart('c-dg-detail', 'bar', dg.labels, dg.values, PALETTE.red, true);
-  mkChart('c-dg-trend',  'line', trend.labels, trend.values, PALETTE.red);
+  mkChart('c-dg-detail', 'bar', dg.labels, dg.values, PALETTE.red,   true, 'Damaged Components', 'Inspector / Checker');
+  mkChart('c-dg-trend',  'line', trend.labels, trend.values, PALETTE.red,   false, 'Date', 'Damaged Components');
 }
 
 function renderStores() {
@@ -414,8 +423,8 @@ function renderStores() {
   const ht   = Math.max(loc.labels.length * 36 + 60, 200);
   const wrap = $('loc-chart-area');
   if (wrap) wrap.style.height = ht + 'px';
-  mkChart('c-stores-date', 'line', date.labels, date.values, PALETTE.teal);
-  mkChart('c-stores-loc',  'bar',  loc.labels,  loc.values,  PALETTE.accent, true);
+  mkChart('c-stores-date', 'line', date.labels, date.values, PALETTE.teal,  false, 'Date', 'No. of Inspections');
+  mkChart('c-stores-loc',  'bar',  loc.labels,  loc.values,  PALETTE.accent, true, 'No. of Inspections', 'Location / Store');
 }
 
 // ── PDF Export ───────────────────────────────────────────────
