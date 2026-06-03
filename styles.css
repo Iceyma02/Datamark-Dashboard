@@ -542,3 +542,160 @@ body {
   .main-area { padding: 0; overflow: visible; }
   .chart-card { break-inside: avoid; border: 1px solid #ccc; }
 }
+
+/* ── Glossary ─────────────────────────────────────────────── */
+.sidebar-glossary { padding: 0.5rem 0.75rem 0; }
+.glossary-btn { color: var(--text3); font-size: 12px; }
+.glossary-btn:hover { color: var(--accent); background: rgba(0,180,216,0.08); }
+
+.glossary-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(7,11,20,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.glossary-overlay.open { display: flex; }
+
+.glossary-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 0 0 1px rgba(0,180,216,0.1), 0 32px 80px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.glossary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.glossary-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.glossary-close {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text2);
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  transition: all 0.15s;
+}
+.glossary-close:hover { border-color: var(--red); color: var(--red); }
+
+.glossary-intro {
+  padding: 1rem 1.5rem 0.5rem;
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+.glossary-items { padding: 0.75rem 1.5rem 1rem; display: flex; flex-direction: column; gap: 1px; }
+
+.glossary-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 1rem;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+.glossary-item:hover { background: var(--surface2); }
+
+.glossary-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-radius: 6px;
+  padding: 5px 9px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 1px;
+  min-width: 52px;
+  text-align: center;
+}
+.glossary-badge.green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+.glossary-badge.amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.3); }
+.glossary-badge.blue  { background: var(--blue-dim);  color: var(--blue);  border: 1px solid rgba(59,130,246,0.3); }
+.glossary-badge.red   { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,0.3); }
+.glossary-badge.muted { background: var(--surface3);  color: var(--text2); border: 1px solid var(--border); font-size: 9px; }
+
+.glossary-body { flex: 1; }
+.glossary-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.glossary-desc {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+}
+.glossary-desc strong { color: var(--text); }
+.glossary-desc em { color: var(--text3); font-style: normal; font-family: var(--font-mono); font-size: 11px; }
+
+.glossary-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text3);
+  position: sticky;
+  bottom: 0;
+  background: var(--surface);
+}
+.btn-glossary-close {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text2);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-glossary-close:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Info button on chart cards */
+.chart-info-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text3);
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.chart-info-btn:hover { border-color: var(--accent); color: var(--accent); }
