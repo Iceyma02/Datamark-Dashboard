@@ -73,13 +73,49 @@ function baseChartOpts(horizontal = false, xLabel = '', yLabel = '') {
   };
 }
 
+// Inline data-label plugin — draws value on/beside each bar
+const dataLabelPlugin = {
+  id: 'dataLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx, data: cd } = chart;
+    const ds = chart.getDatasetMeta(0);
+    if (!ds || ds.type !== 'bar') return;
+    ctx.save();
+    ds.data.forEach((bar, i) => {
+      const val = cd.datasets[0].data[i];
+      if (!val || val === 0) return;
+      const label = val >= 1000 ? (val / 1000).toFixed(1) + 'k' : String(Math.round(val));
+      ctx.font = '600 10px DM Sans, sans-serif';
+      ctx.fillStyle = 'rgba(232,244,248,0.85)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const isHoriz = chart.options.indexAxis === 'y';
+      if (isHoriz) {
+        // horizontal bar — label inside bar near right edge, or just outside if bar too small
+        const barW = bar.width;
+        const labelW = ctx.measureText(label).width + 8;
+        const x = barW > labelW + 6 ? bar.x - labelW / 2 - 2 : bar.x + labelW / 2 + 4;
+        ctx.fillStyle = barW > labelW + 6 ? 'rgba(232,244,248,0.9)' : 'rgba(138,174,196,0.9)';
+        ctx.fillText(label, x, bar.y);
+      } else {
+        // vertical bar — label above bar
+        ctx.fillStyle = 'rgba(232,244,248,0.85)';
+        ctx.fillText(label, bar.x, bar.y - 7);
+      }
+    });
+    ctx.restore();
+  }
+};
+
 function mkChart(id, type, labels, data, color, horizontal = false, xLabel = '', yLabel = '') {
   if (charts[id]) { charts[id].destroy(); delete charts[id]; }
   const canvas = $(id);
   if (!canvas) return;
   const borderRadius = type === 'bar' ? 5 : 0;
+  const plugins = type === 'bar' ? [dataLabelPlugin] : [];
   charts[id] = new Chart(canvas, {
     type,
+    plugins,
     data: {
       labels,
       datasets: [{
@@ -499,3 +535,29 @@ async function downloadPDF() {
     overlay.style.display = 'none';
   }
 }
+
+// ── Glossary ─────────────────────────────────────────────────
+function toggleGlossary() {
+  const overlay = document.getElementById('glossary-overlay');
+  overlay.classList.toggle('open');
+  // Trap focus when open
+  if (overlay.classList.contains('open')) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+}
+
+function closeGlossaryOutside(e) {
+  if (e.target === document.getElementById('glossary-overlay')) {
+    toggleGlossary();
+  }
+}
+
+// Close glossary on Escape key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const overlay = document.getElementById('glossary-overlay');
+    if (overlay && overlay.classList.contains('open')) toggleGlossary();
+  }
+});
