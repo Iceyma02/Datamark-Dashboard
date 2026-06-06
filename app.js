@@ -624,9 +624,6 @@ function renderStores() {
     ? filteredData
     : filteredData.filter(d => d.loctype === loctypeSel);
 
-  const date = byDate(chartData);
-  mkChart('c-stores-date', 'line', date.labels, date.values, '#14b8a6', false, 'Date', 'No. of Inspections');
-
   renderStoreTable(chartData, loctypeSel);
 }
 
