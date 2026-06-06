@@ -316,8 +316,8 @@ function parseSheet(ws, sheetName) {
     nf:       headers.findIndex(h=>h==='n_f'||h==='nf'),
     dg:       headers.findIndex(h=>h==='d_g'||h==='dg'),
     dm:       headers.findIndex(h=>h==='dm'),
-    location: headers.findIndex(h=>h.includes('location')||h==='code'),
     loctype:  headers.findIndex(h=>h.includes('location type')||h.includes('loctype')),
+    location: headers.findIndex(h=>h==='location'||h==='code'||h==='location name'),
     store:    headers.findIndex(h=>h.includes('store name')),
   };
   for (let i=headerRow+1; i<raw.length; i++) {
