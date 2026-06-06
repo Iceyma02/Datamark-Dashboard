@@ -616,73 +616,108 @@ function renderDGView() {
 
 // ── Store Inspections ─────────────────────────────────────────
 function renderStores() {
-  const storeData = filteredData.filter(d => d.loctype === 'Store');
-  const date = byDate(storeData);
+  // Determine which location type is selected
+  const loctypeSel = $('store-loctype') ? $('store-loctype').value : 'all';
+
+  // For the timeline chart: use filtered data scoped to selected loctype
+  const chartData = loctypeSel === 'all'
+    ? filteredData
+    : filteredData.filter(d => d.loctype === loctypeSel);
+
+  const date = byDate(chartData);
   mkChart('c-stores-date', 'line', date.labels, date.values, '#14b8a6', false, 'Date', 'No. of Inspections');
-  renderStoreTable(storeData);
+
+  renderStoreTable(chartData, loctypeSel);
 }
 
-function renderStoreTable(storeData) {
-  const mode = ($('store-view-mode') && $('store-view-mode').value) || 'month';
+function renderStoreTable(data, loctypeSel) {
+  const mode      = ($('store-view-mode') && $('store-view-mode').value) || 'date';
   const container = $('store-table-container');
-  if (!storeData || storeData.length === 0) { container.innerHTML = '<p style="color:var(--text3);padding:2rem;text-align:center">No store inspection data in current filter.</p>'; return; }
 
-  const locations = [...new Set(storeData.map(d=>d.location))].filter(Boolean).sort();
-
-  let cols, colLabel;
-  if (mode === 'month') {
-    cols = [...new Set(storeData.map(d=>d.month))].sort();
-    colLabel = m => { const [y,mo]=m.split('-'); return new Date(+y,+mo-1).toLocaleString('default',{month:'short',year:'2-digit'}); };
-  } else {
-    cols = [...new Set(storeData.map(d=>d.date))].sort().slice(-60); // cap at 60 dates
-    colLabel = d => d.slice(5);
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p style="color:var(--text3);padding:2rem;text-align:center">No inspection data for this selection. Try adjusting your filters.</p>';
+    return;
   }
 
-  // Build data matrix
+  // Update subtitle dynamically
+  const subtitleEl = document.querySelector('#view-stores .chart-card:last-child .chart-card-sub');
+  if (subtitleEl) {
+    const typeLabel = loctypeSel === 'all' ? 'All Locations' : loctypeSel + 's';
+    subtitleEl.textContent = `Rows = ${typeLabel} · Columns = ${mode==='month'?'Month':'Date'} · Values = Total inspections. Blank = not inspected that day.`;
+  }
+
+  // Rows: individual location names (B17, Hydraulic Room, Tyre Bay, etc.)
+  const locations = [...new Set(data.map(d => d.location))].filter(Boolean).sort();
+
+  // Columns: dates or months
+  let cols, colLabel;
+  if (mode === 'month') {
+    cols = [...new Set(data.map(d => d.month))].sort();
+    colLabel = m => {
+      const [y, mo] = m.split('-');
+      return new Date(+y, +mo-1).toLocaleString('default', {month:'short', year:'2-digit'});
+    };
+  } else {
+    // Date mode — show all unique dates sorted descending (newest left, like the image)
+    cols = [...new Set(data.map(d => d.date))].filter(Boolean).sort().reverse();
+    colLabel = d => d.slice(5).replace('-', '/'); // MM/DD display
+  }
+
+  // Build matrix: rows=location, cols=date/month, value=inspection count
   const matrix = {};
   locations.forEach(loc => {
     matrix[loc] = {};
     cols.forEach(col => { matrix[loc][col] = 0; });
   });
-  storeData.forEach(d => {
-    const col = mode==='month' ? d.month : d.date;
-    if (matrix[d.location] && col in matrix[d.location]) matrix[d.location][col]++;
+  data.forEach(d => {
+    const col = mode === 'month' ? d.month : d.date;
+    if (matrix[d.location] !== undefined && col in matrix[d.location]) {
+      matrix[d.location][col]++;
+    }
   });
 
-  // Column totals
+  // Column totals (Grand Total row at bottom)
   const colTotals = {};
-  cols.forEach(col => { colTotals[col] = locations.reduce((a,loc)=>a+(matrix[loc][col]||0),0); });
-  const grandTotal = Object.values(colTotals).reduce((a,v)=>a+v,0);
+  cols.forEach(col => {
+    colTotals[col] = locations.reduce((a, loc) => a + (matrix[loc][col] || 0), 0);
+  });
+  const grandTotal = Object.values(colTotals).reduce((a, v) => a + v, 0);
 
-  // Get max value for color scaling
-  const allVals = locations.flatMap(loc => cols.map(col => matrix[loc][col]||0)).filter(v=>v>0);
-  const maxVal = allVals.length ? Math.max(...allVals) : 1;
+  // Color scale based on max value in this dataset
+  const allVals = locations.flatMap(loc => cols.map(col => matrix[loc][col] || 0)).filter(v => v > 0);
+  const maxVal  = allVals.length ? Math.max(...allVals) : 1;
 
   function valClass(v) {
-    if (v===0) return 'val-zero';
-    if (v < maxVal*0.15) return 'val-low';
-    if (v < maxVal*0.5)  return 'val-mid';
+    if (v === 0)            return 'val-zero';
+    if (v < maxVal * 0.15)  return 'val-low';
+    if (v < maxVal * 0.5)   return 'val-mid';
     return 'val-high';
   }
 
+  // Only show rows that have at least one inspection
+  const activeLocations = locations.filter(loc => cols.some(col => (matrix[loc][col] || 0) > 0));
+
   const thead = `<thead><tr>
-    <th>Store / Location</th>
-    ${cols.map(c=>`<th>${colLabel(c)}</th>`).join('')}
+    <th>${loctypeSel === 'Vehicle' ? 'Vehicle' : loctypeSel === 'Store' ? 'Store / Location' : 'Location'}</th>
+    ${cols.map(c => `<th>${colLabel(c)}</th>`).join('')}
     <th>Total</th>
   </tr></thead>`;
 
-  const tbody = `<tbody>${locations.map(loc => {
-    const rowTotal = cols.reduce((a,col)=>a+(matrix[loc][col]||0),0);
+  const tbody = `<tbody>${activeLocations.map(loc => {
+    const rowTotal = cols.reduce((a, col) => a + (matrix[loc][col] || 0), 0);
     return `<tr>
       <td>${loc}</td>
-      ${cols.map(col => { const v=matrix[loc][col]||0; return `<td class="${valClass(v)}">${v||''}</td>`; }).join('')}
-      <td style="font-weight:700;color:var(--accent)">${rowTotal||''}</td>
+      ${cols.map(col => {
+        const v = matrix[loc][col] || 0;
+        return `<td class="${valClass(v)}">${v || ''}</td>`;
+      }).join('')}
+      <td style="font-weight:700;color:var(--accent)">${rowTotal || ''}</td>
     </tr>`;
   }).join('')}</tbody>`;
 
   const tfoot = `<tfoot><tr>
     <td>Grand Total</td>
-    ${cols.map(col=>`<td>${colTotals[col]||''}</td>`).join('')}
+    ${cols.map(col => `<td>${colTotals[col] || ''}</td>`).join('')}
     <td>${grandTotal}</td>
   </tr></tfoot>`;
 
