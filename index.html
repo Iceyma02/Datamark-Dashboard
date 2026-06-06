@@ -184,18 +184,26 @@
           <div id="view-stores" class="view">
             <div class="chart-card full-width">
               <div class="chart-card-head">
-                <div><div class="chart-card-title">Store Inspections by Date</div><div class="chart-card-sub">Daily inspection volume across all store locations</div></div>
+                <div><div class="chart-card-title">Inspections by Date</div><div class="chart-card-sub">Daily inspection volume — quickly see when locations are not being inspected</div></div>
                 <span class="chart-badge teal">Timeline</span>
               </div>
               <div class="chart-area" style="height:260px"><canvas id="c-stores-date"></canvas></div>
             </div>
             <div class="chart-card full-width" style="margin-top:16px">
               <div class="chart-card-head">
-                <div><div class="chart-card-title">Store Inspections Matrix</div><div class="chart-card-sub">Rows = Store / Location · Columns = Month · Values = Total inspections</div></div>
-                <div style="display:flex;gap:8px;align-items:center">
+                <div>
+                  <div class="chart-card-title">Inspections Matrix</div>
+                  <div class="chart-card-sub">Rows = Location · Columns = Date · Values = No. of inspections. Blank = not inspected.</div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <select id="store-loctype" onchange="renderStores()" class="perf-metric-select">
+                    <option value="all">All Locations</option>
+                    <option value="Store">Stores only</option>
+                    <option value="Vehicle">Vehicles only</option>
+                  </select>
                   <select id="store-view-mode" onchange="renderStores()" class="perf-metric-select">
-                    <option value="month">By Month</option>
                     <option value="date">By Date</option>
+                    <option value="month">By Month</option>
                   </select>
                 </div>
               </div>
