@@ -3,9 +3,7 @@
 
 // ── Credentials ──────────────────────────────────────────────
 const USERS = {
-  admin:   'datamark2025',
-  laura:   'datamark2026',
-  john:    'datamark@john',
+  admin:   'datamark2026',
 };
 
 // ── State ─────────────────────────────────────────────────────
