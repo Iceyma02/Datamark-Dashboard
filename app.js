@@ -4,7 +4,7 @@
 // ── Credentials ──────────────────────────────────────────────
 const USERS = {
   admin:   'datamark2025',
-  manager: 'inspect123',
+  Laura: 'datamark2026',
   john:    'datamark@john',
 };
 
